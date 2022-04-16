@@ -8,10 +8,11 @@ def equipment_list_sorter(entry_in):
     return (section_id, name)
 
 def create_equipment_reference(list_in):
-    xml_out = ''
     section_str = ''
     entry_str = ''
     name_lower = ''
+
+    xml_out =('\t\t<equipment>\n')
 
     # Create individual item entries
     for entry_dict in sorted(list_in, key=equipment_list_sorter):
@@ -25,6 +26,8 @@ def create_equipment_reference(list_in):
         xml_out += (f'\t\t\t\t<subtype type="string">{entry_dict["subtype"]}</subtype>\n')
         xml_out += (f'\t\t\t\t<description type="formattedtext">{entry_dict["description"]}\n\t\t\t\t</description>\n')
         xml_out += (f'\t\t\t</{name_lower}>\n')
+
+    xml_out +=('\t\t</equipment>\n')
 
     return xml_out
 
@@ -161,7 +164,7 @@ def extract_equipment_list(db_in):
             section_id = 13
 
         if section_id < 99:
-            print(str(i) + ' ' + name_str)
+##            print(str(i) + ' ' + name_str)
 
             # Cost
             if cost_lbl := parsed_html.find(string='Price'):
@@ -208,8 +211,8 @@ def extract_equipment_list(db_in):
             # Build the item entry
             export_dict = {}
             export_dict['cost'] = float(cost_str) if cost_str != '' else 0
-            export_dict['description'] = re.sub('’', '\'', description_str)
-            export_dict['name'] = re.sub('’', '\'', name_str)
+            export_dict['description'] = description_str
+            export_dict['name'] = name_str
             export_dict['section_id'] = section_id
             export_dict['special'] = special_str
             export_dict['type'] = type_str

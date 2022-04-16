@@ -8,10 +8,11 @@ def weapons_list_sorter(entry_in):
     return (section_id, name)
 
 def create_weapons_reference(list_in):
-    xml_out = ''
     section_str = ''
     entry_str = ''
     name_lower = ''
+
+    xml_out =('\t\t<weapon>\n')
 
     # Create individual item entries
     for entry_dict in sorted(list_in, key=weapons_list_sorter):
@@ -31,6 +32,8 @@ def create_weapons_reference(list_in):
         xml_out += (f'\t\t\t\t<properties type="string">{entry_dict["properties"]}</properties>\n')
         xml_out += (f'\t\t\t\t<description type="formattedtext">{entry_dict["description"]}\n\t\t\t\t</description>\n')
         xml_out += (f'\t\t\t</{name_lower}>\n')
+
+    xml_out +=('\t\t</weapon>\n')
 
     return xml_out
 
@@ -62,6 +65,7 @@ def create_weapons_table(list_in, library_in):
     for entry_dict in sorted(list_in, key=weapons_list_sorter):
         item_id += 1
         entry_str = "00000"[0:len("00000")-len(str(item_id))] + str(item_id)
+        suffix_str = ' Weapons' if entry_dict["type"] != 'Implement' else 's'
         name_lower = re.sub('\W', '', entry_dict["name"].lower())
 
         #Check for new section
@@ -73,7 +77,7 @@ def create_weapons_table(list_in, library_in):
                 xml_out += (f'\t\t\t\t</section{section_str}>\n')
             section_str = "000"[0:len("000")-len(str(section_id))] + str(section_id)
             xml_out += (f'\t\t\t\t<section{section_str}>\n')
-            xml_out += (f'\t\t\t\t\t<description type="string">{entry_dict["prof"]} {entry_dict["type"]} Weapons</description>\n')
+            xml_out += (f'\t\t\t\t\t<description type="string">{entry_dict["prof"]} {entry_dict["type"]}{suffix_str}</description>\n')
             xml_out += (f'\t\t\t\t\t<subdescription type="string">{entry_dict["heft"]}</subdescription>\n')
             xml_out += ('\t\t\t\t\t<weapons>\n')
 
@@ -107,7 +111,9 @@ def extract_weapons_list(db_in):
     weapons_out = []
 
     # List of possible Weapon properties
-    properties_list = ['^Brutal 1', '^Brutal 2', '^Defensive', '^Heavy Thrown', '^High Crit', '^Light Thrown', '^Load Free', '^Load Minor', '^Load Move', '^Load Standard', '^Off-Hand', '^Reach[^i]', '^Small', '^Stout', '^Versatile']
+    properties_list = ['^Brutal 1', '^Brutal 2', '^Defensive', '^Heavy Thrown', '^High Crit', '^Light Thrown', '^Load Free', '^Load Minor', '^Load Move', '^Load Standard', '^Off-Hand', '^Reach[^i]', '^Small', '^Stout', '^Versatile',\
+        '^Accurate', '^Blinking', '^Deadly', '^Distant', '^Empowered Crit', '^Forceful', '^Mighty', '^Mobile', '^Reaching', '^Shielding', '^Undeniable', '^Unerring', '^Unstoppable',\
+        'Energized \(acid\)', 'Energized \(cold\)', 'Energized \(fire\)', 'Energized \(force\)', 'Energized \(lightning\)', 'Energized \(necrotic\)', 'Energized \(psychic\)', 'Energized \(radiant\)', 'Energized \(thunder\)']
 
     print('\n\n\n=========== WEAPONS ===========')
     for i, row in enumerate(db_in, start=1):
@@ -137,8 +143,8 @@ def extract_weapons_list(db_in):
 
         # Type - Basic weapons and Superior implements
         # brute force the Type/Heft
-        if type_lbl := parsed_html.find(string=re.compile('^(Simple|Military|Superior|Improvised.*handed.*weapon).*')):
-            type_lbl = re.sub(' *$', '', type_lbl)
+        if type_lbl := parsed_html.find(string=re.compile('^(Simple|Military|Superior( one| two| dou|\s*$)|Improvised.*handed.*weapon)')):
+            type_lbl = re.sub('\s*$', '', type_lbl)
             if type_lbl == 'Simple one-handed melee weapon':
                 section_id = 1
                 prof_str = 'Simple'
@@ -225,18 +231,24 @@ def extract_weapons_list(db_in):
                 prof_str = 'Improvised'
                 type_str = 'Ranged'
                 heft_str = 'One-Handed'
-            elif type_lbl == 'Improvised two-handed ranged weapon':
+            # there are none of these
+##            elif type_lbl == 'Improvised two-handed ranged weapon':
+##                section_id = 17
+##                prof_str = 'Improvised'
+##                type_str = 'Ranged'
+##                heft_str = 'Two-Handed'
+            elif type_lbl == 'Superior':
                 section_id = 17
-                prof_str = 'Improvised'
-                type_str = 'Ranged'
-                heft_str = 'Two-Handed'
+                prof_str = 'Superior'
+                type_str = 'Implement'
+                heft_str = 'One-Handed'
             else:
                 section_id = 100
                 type_str = type_lbl
 
         # Records to be processed
         if section_id < 99:
-            print(str(i) + ' ' + name_str)
+##            print(str(i) + ' ' + name_str)
 
             # Cost
             if cost_lbl := parsed_html.find(string='Price'):
@@ -319,10 +331,10 @@ def extract_weapons_list(db_in):
             export_dict = {}
             export_dict['cost'] = float(cost_str) if cost_str != '' else 0
             export_dict['damage'] = damage_str
-            export_dict['description'] = re.sub('’', '\'', description_str)
+            export_dict['description'] = description_str
             export_dict['group'] = group_str
             export_dict['heft'] = heft_str
-            export_dict['name'] = re.sub('’', '\'', name_str)
+            export_dict['name'] = name_str
             export_dict['prof'] = prof_str
             export_dict['profbonus'] = profbonus_str
             export_dict['properties'] = properties_str

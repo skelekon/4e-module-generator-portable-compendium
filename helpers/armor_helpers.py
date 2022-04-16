@@ -11,10 +11,11 @@ def armor_list_sorter(entry_in):
     return (section_id, ac, min_enhance, name)
 
 def create_armor_reference(list_in):
-    xml_out = ''
     section_str = ''
     entry_str = ''
     name_lower = ''
+
+    xml_out =('\t\t<armor>\n')
 
     # Create individual item entries
     for entry_dict in sorted(list_in, key=armor_list_sorter):
@@ -33,6 +34,8 @@ def create_armor_reference(list_in):
         xml_out += (f'\t\t\t\t<prof type="string">{entry_dict["prof"]}</prof>\n')
         xml_out += (f'\t\t\t\t<description type="formattedtext">{entry_dict["description"]}\n\t\t\t\t</description>\n')
         xml_out += (f'\t\t\t</{name_lower}>\n')
+
+    xml_out +=('\t\t</armor>\n')
 
     return xml_out
 
@@ -57,7 +60,7 @@ def create_armor_table(list_in, library_in):
     # This controls the table that appears when you click on a Library menu
     xml_out += ('\t<armorlists>\n')
     xml_out += ('\t\t<core>\n')
-    xml_out += ('\t\t\t<description type="string">Weapons Table</description>\n')
+    xml_out += ('\t\t\t<description type="string">Armor Table</description>\n')
     xml_out += ('\t\t\t<groups>\n')
 
     # Create individual item entries
@@ -131,7 +134,7 @@ def extract_armor_list(db_in):
         type_str = ''
         weight_str = ''
 
-        # Prof - Armor
+        # Prof - Armor / Shields
         # use Type to denote Light/Heavy
         if prof_lbl := parsed_html.find(string='Type'):
             prof_str = prof_lbl.parent.next_sibling.replace(': ', '')
@@ -158,30 +161,38 @@ def extract_armor_list(db_in):
                 section_id = 6
                 prof_str = 'Plate Armor'
                 type_str = 'Heavy'
+            elif prof_str == 'Light Shields':
+                section_id = 7
+                prof_str = 'Light Shields'
+                type_str = 'Light'
+            elif prof_str == 'Heavy Shields':
+                section_id = 8
+                prof_str = 'Heavy Shields'
+                type_str = 'Heavy'
             else:
                 section_id = 100
 
         # Prof - Barding
         # use Type to denote Normal/Huge
         if name_str == 'Light Barding':
-            section_id = 7
+            section_id = 9
             prof_str = 'Barding'
             type_str = 'Normal Creature'
         elif name_str == 'Heavy Barding':
-            section_id = 7
+            section_id = 9
             prof_str = 'Barding'
             type_str = 'Normal Creature'
         elif name_str == 'Light Barding (Huge creature)':
-            section_id = 8
+            section_id = 10
             prof_str = 'Barding'
             type_str = 'Huge Creature'
         elif name_str == 'Heavy Barding (Huge creature)':
-            section_id = 8
+            section_id = 10
             prof_str = 'Barding'
             type_str = 'Huge Creature'
 
         if section_id < 99:
-            print(str(i) + ' ' + name_str)
+##            print(str(i) + ' ' + name_str)
 
             # AC
             if ac_lbl := parsed_html.find(string='AC Bonus'):
@@ -247,9 +258,9 @@ def extract_armor_list(db_in):
             export_dict['ac'] = int(ac_str) if ac_str != '' else 0
             export_dict['checkpenalty'] = int(checkpenalty_str) if checkpenalty_str != '' else 0
             export_dict['cost'] = float(cost_str) if cost_str != '' else 0
-            export_dict['description'] = re.sub('’', '\'', description_str)
+            export_dict['description'] = description_str
             export_dict['min_enhance'] = int(min_enhance_str) if min_enhance_str != '' else 0
-            export_dict['name'] = re.sub('’', '\'', name_str)
+            export_dict['name'] = name_str
             export_dict['prof'] = prof_str
             export_dict['section_id'] = section_id
             export_dict['special'] = special_str
